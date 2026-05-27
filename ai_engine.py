@@ -45,7 +45,6 @@ class AIEngine:
                 "Buying/Selling Climax, No Demand, No Supply, and Professional Money activity."
             )
         elif chosen_school == "Classic":
-            # تخصيص هذا الجزء ليتعامل بذكاء وعمق مع الاستراتيجيات المخصصة التي تكتبها بنفسك في البوت
             system_prompt = (
                 "You are a flexible custom strategy tester for Gold trading. "
                 "The user will provide a specific set of custom technical rules. "
@@ -58,7 +57,7 @@ class AIEngine:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://railway.com", # مطلوب لتجنب حظر الطلبات من OpenRouter
+            "HTTP-Referer": "https://railway.com", 
             "X-Title": "Gold Scalper Bot"
         }
 
@@ -68,7 +67,7 @@ class AIEngine:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Market Data Context:\n{market_data_summary}\n\nStrict Rule: You must respond ONLY with a valid raw JSON object. Do not include any introductory text, markdown blocks, or explanations outside the JSON. Format:\n{{\"action\": \"BUY\"/\"SELL\"/\"WAIT\", \"reason\": \"your brief analysis here\"}}"}
             ],
-            "temperature": 0.2 # درجة منخفضة لضمان الالتزام الصارم بالقواعد الفنية وعدم التخريف
+            "temperature": 0.2 
         }
 
         try:
@@ -77,20 +76,16 @@ class AIEngine:
                 result = response.json()
                 content = result['choices'][0]['message']['content'].strip()
                 
-                # تنظيف النص المستلم في حال قيام الـ AI بإضافة علامات اقتباس البرمجة (```json) بالخطأ
-                if content.startswith("
-```json"):
+                # تنظيف علامات الاقتباس البرمجية بشكل صحيح لحماية السيرفر من الانهيار
+                if content.startswith("```json"):
                     content = content.replace("```json", "").replace("```", "").strip()
                 elif content.startswith("```"):
-                    content = content.replace("
-```", "").strip()
+                    content = content.replace("```", "").strip()
 
-                # تحويل النص البرمجي المستلم بأمان إلى قاموس بايثون (Dictionary)
                 return json.loads(content)
             else:
                 logger.error(f"🚨 فشل الطلب من OpenRouter. رمز الحالة: {response.status_code}")
         except Exception as e:
             logger.error(f"🚨 خطأ أثناء معالجة تحليل الـ AI للماركت: {e}")
 
-        # في حال حدوث أي خطأ شبكي، يعود البوت لوضع الانتظار الآمن لحماية الـ 40$ من الدخول العشوائي
         return {"action": "WAIT", "reason": "AI Engine is analyzing live liquidity cycles. Standing by."}
