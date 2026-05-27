@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
@@ -26,7 +27,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "اختر قسماً من الأزرار الشفافة أدناه لإدارة البوت:"
     )
     
-    # التحقق: إذا كان تفاعل المستخدم عبر أمر /start نرسل رسالة جديدة، وإذا كان عبر زر شفاف نعدل نفس الرسالة
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
     elif update.callback_query:
@@ -80,28 +80,33 @@ async def menu_risk(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
-# 4. دالة تشغيل البوت الأساسية المتوافقة تماماً مع بايثون 3.13 وسيرفرات لينوكس
-def main():
-    # سحب التوكن المربوط بلوحة تحكم Railway بشكل آمن ومباشر
+# 4. دالة التشغيل الحقيقية المتوافقة مع السيرفرات السحابية الحديثة لعدم حدوث كراش
+async def main_async():
     TOKEN = os.getenv("TELEGRAM_TOKEN")
-    
     if not TOKEN:
-        logger.error("🚨 خطأ كارثي: لم يتم العثور على TELEGRAM_TOKEN في متغيرات بيئة السيرفر (Variables)!")
+        logger.error("🚨 خطأ: لم يتم العثور على TELEGRAM_TOKEN في بيئة السيرفر!")
         return
 
-    # بناء التطبيق وإعداده
     application = Application.builder().token(TOKEN).build()
 
-    # ربط الإشارات (Callback Data) القادمة من الأزرار بالدوال لتعديل الرسائل بسلاسة دون رسائل جديدة
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(start, pattern='main_menu'))
     application.add_handler(CallbackQueryHandler(menu_gold, pattern='menu_gold'))
     application.add_handler(CallbackQueryHandler(menu_risk, pattern='menu_risk'))
 
-    logger.info("🚀 جاري بدء تشغيل البوت على سيرفر Railway بنجاح...")
+    logger.info("🚀 جاري تهيئة وإقلاع نظام البوت بنجاح...")
     
-    # التشغيل النظيف والافتراضي المتوافق تماماً مع إصدار 21.2 وبايثون 3.13 على السيرفر السحابي
-    application.run_polling()
+    # بناء وتحديث التهيئة بشكل يدوي لتفادي ثغرة الحزم المتعارضة في بايثون 3.13
+    await application.initialize()
+    await application.updater.start_polling()
+    await application.start()
+    
+    logger.info("🟢 البوت يعمل الآن بكفاءة وبدون تعارض.")
+    
+    # إبقاء السيرفر حياً ومستمعاً للأوامر بشكل دائم
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == '__main__':
-    main()
+    # تشغيل المنظومة من خلال دالة asyncio الصريحة للتحكم الكامل بالـ Event Loop
+    asyncio.run(main_async())
