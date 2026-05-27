@@ -1,6 +1,5 @@
 import os
 import logging
-import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
@@ -81,13 +80,13 @@ async def menu_risk(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
-# 4. دالة تشغيل البوت الأساسية المتوافقة تماماً مع بايثون 3.13 وسيرفرات لنيوكس
+# 4. دالة تشغيل البوت الأساسية المتوافقة تماماً مع بايثون 3.13 وسيرفرات لينوكس
 def main():
-    # سحب التوكن المربوط بلوحة تحكم Railway بشكل آمن
-    TOKEN = os.getenv("TELEGRAM_TOKEN", "ضع_توكن_البوت_هنا")
+    # سحب التوكن المربوط بلوحة تحكم Railway بشكل آمن ومباشر
+    TOKEN = os.getenv("TELEGRAM_TOKEN")
     
-    if TOKEN == "ضع_توكن_البوت_هنا" or not TOKEN:
-        logger.error("خطأ: لم يتم العثور على TELEGRAM_TOKEN في بيئة السيرفر!")
+    if not TOKEN:
+        logger.error("🚨 خطأ كارثي: لم يتم العثور على TELEGRAM_TOKEN في متغيرات بيئة السيرفر (Variables)!")
         return
 
     # بناء التطبيق وإعداده
@@ -101,8 +100,8 @@ def main():
 
     logger.info("🚀 جاري بدء تشغيل البوت على سيرفر Railway بنجاح...")
     
-    # إقلاع مستقر لإنهاء مشكلة تعارض النوافذ والـ Event Loops في بايثون 3.13 على السيرفر
-    application.run_polling(close_loop=False)
+    # التشغيل النظيف والافتراضي المتوافق تماماً مع إصدار 21.2 وبايثون 3.13 على السيرفر السحابي
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
