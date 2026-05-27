@@ -29,7 +29,9 @@ CUSTOM_CONFIG = {
     "fixed_lot": 0.01,
     "executed_trades": 0,
     "daily_profit": 0.00,
-    "daily_loss": 0.00
+    "daily_loss": 0.00,
+    "saved_account_id": "لا يوجد",  
+    "saved_server": "لا يوجد"      
 }
 
 def get_main_keyboard():
@@ -45,7 +47,7 @@ def get_main_keyboard():
 def start_command(message):
     text = (
         "👑 **لوحة تحكم بوت الذهب الذكي (XAUUSD Scalper)**\n\n"
-        "تم تحديث نظام التحقق من اللوت وفصل المدارس الفنية حقيقياً 100%.\n"
+        "تم تفعيل نظام السحب اللحظي لقراءة رصيد وسيولة الحساب حياً.\n"
         "اختر قسماً من الأزرار أدناه لتوجيه النظام:"
     )
     bot.send_message(message.chat.id, text, reply_markup=get_main_keyboard(), parse_mode="Markdown")
@@ -66,7 +68,7 @@ def callback_listener(call):
         )
         bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=get_main_keyboard(), parse_mode="Markdown")
     
-    # --- 👑 قسم رادار الذهب (تم فصل ICT عن SMC كلياً) ---
+    # --- 👑 رادار الذهب ---
     elif call.data == 'menu_gold':
         markup = InlineKeyboardMarkup()
         markup.row(
@@ -79,7 +81,7 @@ def callback_listener(call):
         )
         markup.row(InlineKeyboardButton(f"📈 التحليل الكلاسيكي المطور {'🔹' if CURRENT_SCHOOL=='Classic' else ''}", callback_data='school_classic'))
         
-        status_on = "🟢 تشغيل التداول التلقائي (نشط)" if IS_LIVE_TRADING else "🟢 تشغيل التداول التلقائي"
+        status_on = "🟢 تشداول تلقائي (نشط)" if IS_LIVE_TRADING else "🟢 تشغيل التداول التلقائي"
         status_off = "🔴 إيقاف التداول التلقائي (مفعل)" if not IS_LIVE_TRADING else "🔴 إيقاف التداول التلقائي"
         markup.row(InlineKeyboardButton(status_on, callback_data='trade_on'), InlineKeyboardButton(status_off, callback_data='trade_off'))
         markup.row(InlineKeyboardButton("🔙 رجوع للقائمة الرئيسية", callback_data='main_menu'))
@@ -94,13 +96,7 @@ def callback_listener(call):
         bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
     elif call.data in ['school_ict', 'school_smc', 'school_wyckoff', 'school_vsa', 'school_classic']:
-        school_mapping = {
-            "school_ict": "ICT", 
-            "school_smc": "SMC", 
-            "school_wyckoff": "Wyckoff", 
-            "school_vsa": "VSA", 
-            "school_classic": "Classic"
-        }
+        school_mapping = {"school_ict": "ICT", "school_smc": "SMC", "school_wyckoff": "Wyckoff", "school_vsa": "VSA", "school_classic": "Classic"}
         CURRENT_SCHOOL = school_mapping[call.data]
         callback_listener(call)
         return
@@ -115,7 +111,7 @@ def callback_listener(call):
         callback_listener(call)
         return
 
-    # --- 🛡️ قسم إدارة المخاطر والأمان ---
+    # --- 🛡️ إدارة المخاطر والأمان ---
     elif call.data == 'menu_risk':
         markup = InlineKeyboardMarkup()
         markup.row(InlineKeyboardButton("📊 تحديد حجم اللوت للتداول (Lot Size)", callback_data='click_set_lot'))
@@ -169,7 +165,7 @@ def callback_listener(call):
         )
         bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # --- 🧪 قسم مختبر الاستراتيجيات المخصصة ---
+    # --- 🧪 مختبر الاستراتيجيات המخصصة ---
     elif call.data == 'menu_backtest':
         markup = InlineKeyboardMarkup()
         markup.row(InlineKeyboardButton("✍️ اكتب استراتيجيتك المخصصة الآن", callback_data='write_strategy'))
@@ -188,14 +184,39 @@ def callback_listener(call):
         markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع للمختبر", callback_data='menu_backtest')]])
         bot.edit_message_text(state_text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # --- ⚙️ قسم ربط حساب MT5 ---
+    # --- ⚙️ قسم ربط حساب MT5 وقراءة البيانات الحية ---
     elif call.data == 'menu_mt5':
         markup = InlineKeyboardMarkup()
-        markup.row(InlineKeyboardButton("🧪 حساب تجريبي (Demo Account)", callback_data='mt5_type_demo'))
-        markup.row(InlineKeyboardButton("🟢 حساب حقيقي (Live Account)", callback_data='mt5_type_real'))
+        markup.row(InlineKeyboardButton("🔍 عرض الحساب المرتبط حالياً وقراءة الرصيد", callback_data='view_linked_account'))
+        markup.row(
+            InlineKeyboardButton("🧪 حساب تجريبي (Demo)", callback_data='mt5_type_demo'),
+            InlineKeyboardButton("🟢 حساب حقيقي (Live)", callback_data='mt5_type_real')
+        )
         markup.row(InlineKeyboardButton("🔙 رجوع للقائمة الرئيسية", callback_data='main_menu'))
         
-        text = "⚙️ **لوحة إعدادات وربط منصة MetaTrader 5**\n\nالرجاء اختيار نوع حساب التداول للبدء في ربطه بالسيرفر:"
+        text = "⚙️ **لوحة إعدادات وربط منصة MetaTrader 5**\n\nيمكنك الآن استعراض وقراءة رصيدك حياً أو إدخال بيانات حساب جديد:"
+        bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
+
+    elif call.data == 'view_linked_account':
+        # استدعاء دالة تحديث الأرقام حياً من الجسر السحابي للـ MT5 فوراً عند الضغط
+        metrics = mt5_bridge.get_account_metrics()
+        markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع لقسم MT5", callback_data='menu_mt5')]])
+        
+        account_id_display = CUSTOM_CONFIG["saved_account_id"]
+        server_display = CUSTOM_CONFIG["saved_server"]
+        
+        text = (
+            "🔍 **تفاصيل وبيانات حساب التداول الحالية:**\n"
+            "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+            f"• 🆔 **رقم الميتا (Account ID):** `{account_id_display}`\n"
+            f"• 🖥️ **اسم السيرفر (Server):** `{server_display}`\n"
+            f"• 📡 **حالة ربط الجسر السحابي:** {metrics['status']}\n"
+            "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+            f"• 💰 **الرصيد الفعلي الحالي (Balance):** `{metrics['balance']:.2f} USD`\n"
+            f"• 📊 **السيولة اللحظية الحية (Equity):** `{metrics['equity']:.2f} USD`\n"
+            "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+            "💡 *يتم سحب وتحديث قيمة الـ Balance والـ Equity حياً من خوادم البروكر مباشرة.*"
+        )
         bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
     elif call.data in ['mt5_type_demo', 'mt5_type_real']:
@@ -208,28 +229,26 @@ def callback_listener(call):
 
     bot.answer_callback_query(call.id)
 
-# --- 📥 مستمع معالجة المدخلات النصية والرقمية والتحقق منها ---
+# --- 📥 مستمع معالجة المدخلات وحفظ تفاصيل البيانات الرقمية ---
 @bot.message_handler(func=lambda message: True)
 def text_input_handler(message):
     chat_id = message.chat.id
     user_text = message.text
+    global CUSTOM_CONFIG
     
-    # 1. التحقق الصارم لحجم اللوت (الحد الأدنى 0.01 واكتشاف الأخطاء الرقمية)
     if USER_STATE.get(chat_id) == "waiting_for_lot":
         try:
             lot_value = float(user_text)
             if lot_value < 0.01:
-                bot.send_message(chat_id, "⚠️ **خطأ في الحفظ!** حجم عقد التداول لا يمكن أن يكون أقل من `0.01` في أنظمة MT5 الحقيقية للذهب. الرجاء إدخال رقم صحيح يساوي أو أكبر من `0.01`:")
+                bot.send_message(chat_id, "⚠️ **خطأ في الحفظ!** حجم عقد التداول لا يمكن أن يكون أقل من `0.01`. الرجاء إدخال رقم صحيح:")
                 return
-            
             CUSTOM_CONFIG["fixed_lot"] = lot_value
             USER_STATE.pop(chat_id, None)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("🛡️ عودة لقسم المخاطر", callback_data='menu_risk')]])
-            bot.send_message(chat_id, f"✅ **تم حفظ اللوت بنجاح!**\n\nحجم عقد التداول المعتمد والمثبت الآن هو: `{lot_value}`.", reply_markup=markup, parse_mode="Markdown")
+            bot.send_message(chat_id, f"✅ **تم حفظ اللوت بنجاح!**\n\nحجم عقد التداول الجديد المعتمد الآن هو: `{lot_value}`.", reply_markup=markup, parse_mode="Markdown")
         except ValueError:
-            bot.send_message(chat_id, "⚠️ **خطأ في المدخلات!** يرجى إرسال أرقام صحيحة وصالحة لحجم اللوت. *مثال:* `0.05` أو `0.10`")
+            bot.send_message(chat_id, "⚠️ **خطأ!** يرجى إرسال أرقام صالحة لحجم اللوت. *مثال:* `0.05`")
 
-    # 2. جلب حد الخسارة اليومي
     elif USER_STATE.get(chat_id) == "waiting_for_loss_limit":
         try:
             loss_value = float(user_text)
@@ -238,11 +257,10 @@ def text_input_handler(message):
             risk_control.max_daily_loss = loss_value
             USER_STATE.pop(chat_id, None)
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("🛡️ عودة لقسم المخاطر", callback_data='menu_risk')]])
-            bot.send_message(chat_id, f"✅ **تم حفظ حد الخسارة بنجاح!**\n\nسقف الخسارة اليومي الأقصى مثبت على: `{loss_value:.2f} USD`.", reply_markup=markup, parse_mode="Markdown")
+            bot.send_message(chat_id, f"✅ **تم حفظ حد الخسارة بنجاح!**\n\nسقف الخسارة اليومي مثبت الآن على: `{loss_value:.2f} USD`.", reply_markup=markup, parse_mode="Markdown")
         except ValueError:
-            bot.send_message(chat_id, "⚠️ **خطأ في المدخلات!** الرجاء إرسال أرقام صحيحة بالدولار. مثال: `50` ")
+            bot.send_message(chat_id, "⚠️ **خطأ!** الرجاء إرسال رقم صحيح بالدولار. مثال: `40`")
 
-    # 3. خطوات ربط MT5
     elif USER_STATE.get(chat_id) == "waiting_mt5_broker":
         USER_DATA[chat_id]["broker"] = user_text
         USER_STATE[chat_id] = "waiting_mt5_id"
@@ -258,6 +276,9 @@ def text_input_handler(message):
         broker = USER_DATA[chat_id]["broker"]
         acc_id = USER_DATA[chat_id]["id"]
         acc_type = USER_DATA[chat_id]["type"]
+        
+        CUSTOM_CONFIG["saved_account_id"] = acc_id
+        CUSTOM_CONFIG["saved_server"] = broker
         
         USER_STATE.pop(chat_id, None)
         USER_DATA.pop(chat_id, None)
@@ -280,7 +301,6 @@ def text_input_handler(message):
             parse_mode="Markdown"
         )
 
-    # 4. استقبال وصف الاستراتيجية المخصصة للمختبر
     elif USER_STATE.get(chat_id) == "waiting_for_strategy":
         USER_STATE.pop(chat_id, None)
         msg_waiting = bot.send_message(chat_id, "🔍 **جاري فلترة الاستراتيجية المخصصة ومطابقتها عبر OpenRouter...**")
@@ -295,11 +315,11 @@ def text_input_handler(message):
         response_text = (
             "🧪 **تقرير فحص وتجهيز الاستراتيجية المخصصة:**\n\n"
             f"📥 **الاستراتيجية المكتوبة:** \"{user_text}\"\n\n"
-            f"🧠 **تحليل وتوصية الـ AI الافتراضية:** `{ai_analysis.get('reason', 'القواعد واضحة وجاهزة للتنفيذ على الذهب.')}`\n\n"
+            f"🧠 **تحليل وتوصية الـ AI الافتراضية:** `{ai_analysis.get('reason', 'الرموز والقواعد واضحة وجاهزة للتنفيذ.')}`\n\n"
             "🎮 يمكنك الآن التحكم بتشغيل أو إيقاف هذه الاستراتيجية المخصصة للتداول التلقائي حياً عبر الأزرار الشفافة أدناه:"
         )
         bot.send_message(chat_id, response_text, reply_markup=markup, parse_mode="Markdown")
 
 if __name__ == '__main__':
-    logger.info("🚀 تشغيل المنظومة المحدثة بكافة شروط الحماية الحقيقية وفصل المدارس...")
+    logger.info("🚀 تشغيل المنظومة الكاملة المحدثة بقراءة الرصيد اللحظي الحقيقي والسيولة...")
     bot.infinity_polling()
