@@ -1,10 +1,15 @@
 import os
 import logging
+import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
 # إعدادات الـ Logging لمراقبة عمل السيرفر على Railway وضمان تسجيل الأخطاء إن وجدت
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 # 1. الدالة الرئيسية لعرض القائمة الأساسية للمستخدم (تعديل الرسالة تلقائياً)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,9 +51,9 @@ async def menu_gold(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = (
         "👑 **رادار التداول الآلي للذهب (XAUUSD)**\n\n"
-        "• المدرسة النشطة: **ICT & SMC (صارمة 100%)**\n"
-        "• حالة التداول التلقائي: 🔴 **متوقف حالياً**\n"
-        "• فلتر الذكاء الاصطناعي: 🧠 يراقب فجوات الـ FVG والسيولة وحركة صناع السوق...\n\n"
+        "• 🎓 المدرسة النشطة: **ICT & SMC (صارمة 100%)**\n"
+        "• 🤖 حالة التداول التلقائي: 🔴 **متوقف حالياً**\n"
+        "• 🧠 فلتر الذكاء الاصطناعي: يراقب فجوات الـ FVG والسيولة وحركة صناع السوق...\n\n"
         "اختر المدرسة المطلوبة لتفعيل قواعدها بالكامل، أو تحكم بتشغيل وإيقاف التداول الآلي:"
     )
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
@@ -72,15 +77,20 @@ async def menu_risk(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• مخاطرة الصفقة الواحدة: **40.00 USD** (اللوت يُحسب تلقائياً لحماية الحساب)\n"
         "• حد الخسارة اليومي الأقصى: **40.00 USD**\n"
         "• حالة الحماية الحالية: 🟢 **نشطة وتحرس الحساب**\n\n"
-        "بمجرد وصول إجمالي خسائر صفقات الذهب اليوم إلى 40$، سيتفعيل الـ Kill Switch تلقائياً لإغلاق كافة العقود المفتوحة لحمايتك."
+        "بمجرد وصول إجمالي خسائر صفقات الذهب اليوم إلى 40$، سيتفعل الـ Kill Switch تلقائياً لإغلاق كافة العقود المفتوحة لحمايتك."
     )
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
-# 4. دالة تشغيل البوت الأساسية وربط معالجات الأزرار الشفافة
+# 4. دالة تشغيل البوت الأساسية المتوافقة تماماً مع بايثون 3.13 وسيرفرات لنيوكس
 def main():
     # سحب التوكن المربوط بلوحة تحكم Railway بشكل آمن
     TOKEN = os.getenv("TELEGRAM_TOKEN", "ضع_توكن_البوت_هنا")
     
+    if TOKEN == "ضع_توكن_البوت_هنا" or not TOKEN:
+        logger.error("خطأ: لم يتم العثور على TELEGRAM_TOKEN في بيئة السيرفر!")
+        return
+
+    # بناء التطبيق وإعداده
     application = Application.builder().token(TOKEN).build()
 
     # ربط الإشارات (Callback Data) القادمة من الأزرار بالدوال لتعديل الرسائل بسلاسة دون رسائل جديدة
@@ -89,8 +99,10 @@ def main():
     application.add_handler(CallbackQueryHandler(menu_gold, pattern='menu_gold'))
     application.add_handler(CallbackQueryHandler(menu_risk, pattern='menu_risk'))
 
-    # بدء تشغيل واستقبال البيانات من التلغرام
-    application.run_polling()
+    logger.info("🚀 جاري بدء تشغيل البوت على سيرفر Railway بنجاح...")
+    
+    # إقلاع مستقر لإنهاء مشكلة تعارض النوافذ والـ Event Loops في بايثون 3.13 على السيرفر
+    application.run_polling(close_loop=False)
 
 if __name__ == '__main__':
     main()
