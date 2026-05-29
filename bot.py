@@ -154,21 +154,25 @@ def callback_listener(call):
         # إشعار سريع للمستخدم يفيد بالحفظ والتثبيت الفوري دون تعليق
         bot.answer_callback_query(call.id, f"✅ تم تثبيت استراتيجية [{CURRENT_SCHOOL}] للعمل الحسابي!", show_alert=False)
         
-        # إطلاق دورة الفحص في الخلفية فوراً لحماية الواجهة من التهنيج
+        # إطلاق دورة الفحص في الخلفية فوراً لحماية الواجهة من التهنيج لمرة واحدة فقط
         threading.Thread(target=process_market_analysis, args=(chat_id, CURRENT_SCHOOL)).start()
         
+        # تم تصحيح الخطأ هنا: تم استبدال الاستدعاء المتكرر بإعادة توجيه آمنة لشكل القائمة المحدثة
+        call.data = 'menu_gold'
         callback_listener(call)
         return
 
     elif call.data == 'trade_on':
         IS_LIVE_TRADING = True
         bot.answer_callback_query(call.id, "🟢 تم تفعيل وتنفيذ نظام التداول التلقائي حياً")
+        call.data = 'menu_gold'
         callback_listener(call)
         return
         
     elif call.data == 'trade_off':
         IS_LIVE_TRADING = False
         bot.answer_callback_query(call.id, "🔴 تم ايقاف التداول")
+        call.data = 'menu_gold'
         callback_listener(call)
         return
 
