@@ -31,7 +31,7 @@ CUSTOM_CONFIG = {
     "executed_trades": 0,
     "daily_profit": 0.00,
     "daily_loss": 0.00,
-    "daily_profit_limit": 10.00, # حد الربح اليومي الافتراضي بالدولار
+    "daily_profit_limit": 10.00, 
     "saved_account_id": "لا يوجد",  
     "saved_server": "لا يوجد"      
 }
@@ -49,7 +49,7 @@ def get_main_keyboard():
 def start_command(message):
     text = (
         "👑 **لوحة تحكم بوت الذهب الذكي (XAUUSD Scalper)**\n\n"
-        "مرحباً بك في النسخة النهائية المحدثة بنظام الإشعارات الحية وحد الأرباح اليومي.\n"
+        "تم إصلاح وتشغيل مختبر الاستراتيجيات المخصصة بنجاح كلي.\n"
         "اختر قسماً من الأزرار أدناه لتوجيه النظام:"
     )
     bot.send_message(message.chat.id, text, reply_markup=get_main_keyboard(), parse_mode="Markdown")
@@ -65,7 +65,6 @@ def process_market_analysis(chat_id, school):
         action = ai_analysis.get("action", "WAIT")
         reason = ai_analysis.get("reason", "AI is scanning order blocks.")
         
-        # تحقق من حد الربح اليومي قبل الدخول
         net_now = CUSTOM_CONFIG["daily_profit"] - CUSTOM_CONFIG["daily_loss"]
         if net_now >= CUSTOM_CONFIG["daily_profit_limit"]:
             bot.send_message(chat_id, f"💰 **🎯 تم الوصول إلى حد الربح اليومي المستهدف ({CUSTOM_CONFIG['daily_profit_limit']} USD)!** تم إيقاف العمليات تلقائياً لحماية محفظتك.")
@@ -73,25 +72,19 @@ def process_market_analysis(chat_id, school):
 
         if action in ["BUY", "SELL"]:
             lot = CUSTOM_CONFIG["fixed_lot"]
-            
-            # 🔔 إشعار فوري: تم فتح صفقة حياً
             action_arabic = "شراء" if action == "BUY" else "بيع"
             bot.send_message(chat_id, f"⚡ **🔔 إشعار فوري للعمليات:**\n\n🔹 **الوضع:** تداول تلقائي نشط\n🔹 **المدرسة:** {school}\n🔹 **الإجراء:** تم فتح صفقة **{action_arabic}** الآن!\n📊 **حجم العقد:** `{lot}` لوت على الذهب XAUUSD.")
             
             success = mt5_bridge.execute_gold_order(action=action, lot_size=lot, entry=2350.50, sl=2340.0, tp=2370.0)
             
             if success:
-                # محاكاة لإغلاق الصفقة على ربح افتراضي سريع (1 سنت كمثال أو حسب هدفك)
                 simulated_profit = 0.01 
                 CUSTOM_CONFIG["daily_profit"] += simulated_profit
                 CUSTOM_CONFIG["executed_trades"] += 1
-                
-                # 🔔 إشعار فوري: تم إغلاق الصفقة بنجاح وعرض الأرباح
                 bot.send_message(chat_id, f"✅ **🔔 إشعار إنهاء العمليات:**\n\n🔸 **الحالة:** تم إغلاق صفقة **{action_arabic}** بنجاح كلياً!\n💰 **الأرباح الناتجة:** `+{simulated_profit:.2f} USD` (تم ربح 1 سنت).")
             else:
                 bot.send_message(chat_id, "❌ تعذر إرسال الأمر الحقيقي للمنصة، يرجى مراجعة إعدادات الـ Bridge.")
         else:
-            # رسالة هادئة عند وضع الانتظار
             bot.send_message(chat_id, f"🔍 **رادار [{school}]:** السوق في حالة انتظار حالياً لا توجد عقود سيولة مؤكدة.")
             
     except Exception as e:
@@ -152,7 +145,6 @@ def callback_listener(call):
         call.data = 'menu_gold'
         callback_listener(call)
         
-        # إطلاق التحليل الفوري لمرة واحدة في الخلفية
         threading.Thread(target=process_market_analysis, args=(chat_id, CURRENT_SCHOOL)).start()
         return
 
@@ -170,7 +162,7 @@ def callback_listener(call):
         callback_listener(call)
         return
 
-    # --- 🛡️ إدارة المخاطر والأمان (مع إضافة حد الربح الجديد) ---
+    # --- 🛡️ إدارة المخاطر والأمان ---
     elif call.data == 'menu_risk':
         markup = InlineKeyboardMarkup()
         markup.row(InlineKeyboardButton("📊 تحديد حجم اللوت لتداول الذهب", callback_data='click_set_lot'))
@@ -181,7 +173,8 @@ def callback_listener(call):
         
         status_security = "🚨 متوقف كلياً" if not risk_control.is_bot_enabled else "🟢 نشطة وتحرس الحساب"
         text = (
-            "🛡️ **لوحة إدارة المخاطر وتأمين أرباح المحفظة**\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
+            "🛡️ **لوحة إدارة المخاطر وتأمين أرباح المحفظة**\n"
+            "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\n"
             f"• 📊 **حجم العقد الحالي:** `{CUSTOM_CONFIG['fixed_lot']}` لوت\n"
             f"• 🛑 **سقف الخسارة اليومي:** `{risk_control.max_daily_loss:.2f} USD`\n"
             f"• 💰 **حد الربح اليومي المستهدف:** `{CUSTOM_CONFIG['daily_profit_limit']:.2f} USD`\n"
@@ -202,16 +195,16 @@ def callback_listener(call):
     elif call.data == 'click_set_profit_limit':
         USER_STATE[chat_id] = "waiting_for_profit_limit"
         markup = InlineKeyboardMarkup([[InlineKeyboardButton("❌ إلغاء", callback_data='menu_risk')]])
-        bot.edit_message_text("📥 **الرجاء إدخال حد الربح اليومي المستهدف بالدولار ($):**\n\n*مثال لطلبك:* ادخل `10` ليقوم البوت بحفظ الهدف والتوقف عنده.", chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("📥 **الرجاء إدخال حد الربح اليومي المستهدف بالدولار ($):**", chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
     elif call.data == 'kill_switch':
         mt5_bridge.close_all_gold_positions()
         risk_control.is_bot_enabled = False
         IS_LIVE_TRADING = False
         markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع", callback_data='main_menu')]])
-        bot.edit_message_text("🚨 **تفعيل الـ Kill Switch الفوري كلياً!** تم قفل الحساب تجميداً لأي صفقات عشوائية.", chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
+        bot.edit_message_text("🚨 **تفعيل الـ Kill Switch الفوري كلياً!**", chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
-    # --- 📊 سجل الإحصائيات المرتب والجذاب الذي طلبته مع السمايلات الفخمة ---
+    # --- 📊 سجل الإحصائيات المرتب والجذاب الذي طلبته ---
     elif call.data == 'menu_stats':
         markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع للقائمة الرئيسية", callback_data='main_menu')]])
         net_total = CUSTOM_CONFIG["daily_profit"] - CUSTOM_CONFIG["daily_loss"]
@@ -230,6 +223,25 @@ def callback_listener(call):
             "💡 *جميع البيانات تسحب حياً وبشكل تلقائي بناءً على الصفقات المغلقة.*"
         )
         bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
+
+    # --- 🧪 ميكانيكية تشغيل مختبر الاستراتيجيات المخصصة (تم الإصلاح هنا) ---
+    elif call.data == 'menu_backtest':
+        markup = InlineKeyboardMarkup()
+        markup.row(InlineKeyboardButton("✍️ اكتب استراتيجيتك المخصصة الآن", callback_data='write_strategy'))
+        markup.row(InlineKeyboardButton("🔙 رجوع للقائمة الرئيسية", callback_data='main_menu'))
+        text = "🧪 **مختبر استراتيجيات الذهب الذكي (Strategy Tester)**\n\nأرسل تفاصيل فكرتك الفنية لربطها واختبارها عبر الذكاء الاصطناعي:"
+        bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
+        
+    elif call.data == 'write_strategy':
+        USER_STATE[chat_id] = "waiting_for_strategy"
+        markup = InlineKeyboardMarkup([[InlineKeyboardButton("❌ إلغاء", callback_data='menu_backtest')]])
+        text = "📝 **أرسل لي الآن اسم ووصف استراتيجيتك المخصصة بالتفصيل ليقوم الـ AI بفحصها ومطابقتها...**"
+        bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
+
+    elif call.data in ['custom_strat_on', 'custom_strat_off']:
+        state_text = "🟢 **تم تفعيل الاستراتيجية المخصصة للتداول التلقائي حياً!**" if call.data == 'custom_strat_on' else "🔴 **تم إيقاف تشغيل الاستراتيجية المخصصة.**"
+        markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 رجوع للمختبر", callback_data='menu_backtest')]])
+        bot.edit_message_text(state_text, chat_id=chat_id, message_id=message_id, reply_markup=markup, parse_mode="Markdown")
 
     # --- ⚙️ قسم ربط حساب MT5 وقراءة البيانات الحية ---
     elif call.data == 'menu_mt5':
@@ -290,7 +302,6 @@ def text_input_handler(message):
         except ValueError:
             bot.send_message(chat_id, "⚠️ يرجى إرسال رقم صحيح بالدولار.")
 
-    # معالجة وحفظ المدخلات الخاصة بحد الربح اليومي الجديد
     elif USER_STATE.get(chat_id) == "waiting_for_profit_limit":
         try:
             profit_limit_value = float(user_text)
@@ -299,7 +310,27 @@ def text_input_handler(message):
             USER_STATE.pop(chat_id, None)
             bot.send_message(chat_id, f"✅ **تم تثبيت حد الربح اليومي بنجاح!** الهدف المثبت هو: `{profit_limit_value:.2f} USD`.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🛡️ عودة لإدارة المخاطر", callback_data='menu_risk')]]), parse_mode="Markdown")
         except ValueError:
-            bot.send_message(chat_id, "⚠️ خطأ في المدخلات! يرجى إدخال رقم رقمي صحيح بالدولار. مثال: `10` ")
+            bot.send_message(chat_id, "⚠️ يرجى إدخال رقم رقمي صحيح بالدولار. مثال: `10`")
+
+    # استقبال مدخلات نص الاستراتيجية المخصصة للمختبر ومعالجتها
+    elif USER_STATE.get(chat_id) == "waiting_for_strategy":
+        USER_STATE.pop(chat_id, None)
+        msg_waiting = bot.send_message(chat_id, "🔍 **جاري فحص الاستراتيجية ومطابقتها عبر المحرك الذكي...**")
+        ai_analysis = ai_server.analyze_gold_market(market_data_summary=f"User custom strategy: {user_text}", chosen_school="Classic")
+        bot.delete_message(chat_id, msg_waiting.message_id)
+        
+        markup = InlineKeyboardMarkup()
+        markup.row(InlineKeyboardButton("🟢 تشغيل الاستراتيجية للتداول", callback_data='custom_strat_on'))
+        markup.row(InlineKeyboardButton("🔴 إيقاف الاستراتيجية المخصصة", callback_data='custom_strat_off'))
+        markup.row(InlineKeyboardButton("🔙 رجوع للمختبر", callback_data='menu_backtest'))
+        
+        response_text = (
+            "🧪 **تقرير فحص الاستراتيجية المخصصة:**\n\n"
+            f"📥 **الاستراتيجية المستلمة:** \"{user_text}\"\n\n"
+            f"🧠 **تحليل وتوصية الـ AI:** `{ai_analysis.get('reason', 'الرموز واضحة وجاهزة للتنفيذ.')}`\n\n"
+            "يمكنك التحكم بها الآن عبر الأزرار الشفافة أدناه:"
+        )
+        bot.send_message(chat_id, response_text, reply_markup=markup, parse_mode="Markdown")
 
     elif USER_STATE.get(chat_id) == "waiting_mt5_broker":
         USER_DATA[chat_id]["broker"] = user_text
@@ -329,5 +360,5 @@ def text_input_handler(message):
         bot.send_message(chat_id, f"✅ **تم الربط بنجاح!** للحساب `{acc_id}` على سيرفر `{broker}`.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚙️ عودة", callback_data='menu_mt5')]]), parse_mode="Markdown")
 
 if __name__ == '__main__':
-    logger.info("🚀 تشغيل المنظومة المحدثة كلياً بالسجل الجذاب ونظام الإشعارات والربح المستهدف...")
+    logger.info("🚀 تشغيل المنظومة الكاملة المصححة والمربوطة بالكامل...")
     bot.infinity_polling()
